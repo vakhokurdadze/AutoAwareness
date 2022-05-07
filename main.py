@@ -10,14 +10,17 @@ import threading
 from scipy.spatial import distance as dist
 from imutils import face_utils
 
+
 url = "http://192.168.100.6:8080//shot.jpg"
 sirenSoundPath = r"C:\Users\User\Downloads\mixkit-battleship-alarm-1001.wav"
+fullRoadVideo = cv2.VideoCapture(r"C:\Users\User\Downloads\pexels-kelly-lacy-5473757.mp4")
 
 cap = cv2.VideoCapture(0)
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
 predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
 
+vehicle_obj_detector = cv2.createBackgroundSubtractorMOG2(detectShadows=False,history=100,varThreshold=40)
 detector = dlib.get_frontal_face_detector()
 eyeHeight = None
 eyeBallThreshold = 35
@@ -334,7 +337,56 @@ def on_trackbar(val):
     eyeBallThreshold = val
 
 
+def initYolo():
+    ret, frame = fullRoadVideo.read()
+
+    scale_percent = 15
+    width = int(frame.shape[1] * scale_percent / 100)
+    height = int(frame.shape[0] * scale_percent / 100)
+    dim = (width, height)
+
+    optFrame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+
+    mask = vehicle_obj_detector.apply(optFrame)
+    _,mask = cv2.threshold(mask,254,255,cv2.THRESH_BINARY)
+
+
+
+    contours,_ = cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
+    contourCounter = 0
+
+    for contour in contours :
+
+        area = cv2.contourArea(contour)
+
+
+        if area >= 2000 :
+            contourCounter += 1
+
+            x,y,w,h = cv2.boundingRect(contour)
+            cv2.rectangle(optFrame,(x,y),(x+w,y+h),(0,255,0),3)
+
+    cv2.putText(optFrame, f"{contourCounter} Cars in the nearby area", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (200, 23, 32))
+
+    if contourCounter >= 4 :
+        cv2.putText(optFrame, f"Heavy Traffic Detected!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 0, 255))
+    elif 2 <= contourCounter <= 3 :
+        cv2.putText(optFrame, f"Possible Traffic Ahead!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,255))
+    else:
+        cv2.putText(optFrame, f"Empty Road ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,0))
+
+    cv2.imshow('cars', optFrame)
+
 while True:
+
+    try:
+      initYolo()
+    except:
+       print("yolo video done")
+
+
+
 
     # img_resp = requests.get(url)
     # img_arr = np.array(bytearray(img_resp.content), dtype=np.uint8)
@@ -473,3 +525,5 @@ while True:
         # cv2.createTrackbar('gela', title_window, 0, 255, on_trackbar)
 
     # cv2.imshow("Android_cam", img)
+
+
