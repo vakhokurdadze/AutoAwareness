@@ -25,6 +25,7 @@ detector = dlib.get_frontal_face_detector()
 eyeHeight = None
 eyeBallThreshold = 35
 eyeGazeInTheRange = True
+driverOutOfSight = False
 blinkCounter = 0
 offRoadTime = 0
 isOnRoad = True
@@ -123,15 +124,15 @@ def distractionCountDown():
 
         sleepTimer += 1
         sleep(1)
-        if sleepTimer == 3 and longEyeShut:
+        if sleepTimer == 3 and (longEyeShut or driverOutOfSight):
             player = MediaPlayer(sirenSoundPath)
-        elif sleepTimer >= 3 and (rightEyeIsOnRoad and leftEyeIsOnRoad and not longEyeShut):
+        elif sleepTimer >= 3 and (rightEyeIsOnRoad and leftEyeIsOnRoad and not longEyeShut) and not driverOutOfSight:
             if player is not None:
                 player.close_player()
                 sleepTimerHasStarted = False
                 sleepTimer = 0
                 break
-        elif sleepTimer < 3 and (rightEyeIsOnRoad and leftEyeIsOnRoad and not longEyeShut):
+        elif sleepTimer < 3 and (rightEyeIsOnRoad and leftEyeIsOnRoad and not longEyeShut) and not driverOutOfSight :
             if player is not None:
                 player.close_player()
                 sleepTimerHasStarted = False
@@ -393,6 +394,7 @@ while True:
     # img = cv2.imdecode(img_arr, -1)
     # img = imutils.resize(img, width=1000, height=1800)
     blinkSleepThread = threading.Thread(target=blinkSleep)
+    thread = threading.Thread(target=distractionCountDown)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         cap.release()
@@ -414,7 +416,15 @@ while True:
 
     # cv2.putText(singleFrame, f"threshold {eyeBallThreshold}", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 3, (200, 23, 32))
     gazeIsOnRoad = False
+    if(len(faces) == 0):
+        cv2.putText(singleFrame, 'Warning!!', (150, 140), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 255))
+        cv2.putText(singleFrame, 'Drive is out of Sight!! Starting Alarm', (22, 200), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255))
+
+
+        driverOutOfSight = True
+
     for face in faces:
+        driverOutOfSight = False
         topLeftX, topLeftY = face.left(), face.top()
         bottomRightX, bottomRightY = face.right(), face.bottom()
         cv2.rectangle(singleFrame, (topLeftX, topLeftY), (bottomRightX, bottomRightY), (0, 222, 122))
@@ -488,9 +498,9 @@ while True:
         print(sleepTimer)
         player = MediaPlayer(sirenSoundPath)
 
-    thread = threading.Thread(target=distractionCountDown)
 
-    if not leftEyeIsOnRoad or not rightEyeIsOnRoad or longEyeShut:
+
+    if not leftEyeIsOnRoad or not rightEyeIsOnRoad or longEyeShut or driverOutOfSight:
         if not sleepTimerHasStarted:
             sleepTimerHasStarted = True
             thread.start()
