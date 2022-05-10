@@ -13,8 +13,8 @@ from picamera2.picamera2 import Picamera2
 
 
 url = "http://192.168.100.6:8080//shot.jpg"
-sirenSoundPath = r"C:\Users\User\Downloads\mixkit-battleship-alarm-1001.wav"
-fullRoadVideo = cv2.VideoCapture(r"C:\Users\User\Downloads\pexels-kelly-lacy-5473757.mp4")
+sirenSoundPath = r"mixkit-battleship-alarm-1001.wav"
+fullRoadVideo = cv2.VideoCapture(r"pexels-kelly-lacy-5473757.mp4")
 
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
@@ -203,11 +203,6 @@ def leftAndRightEyeHorLenght(landmarks):
     leftEyeRightLandmarkX = int((landmarks.part(44).x + landmarks.part(46).x) / 2)
     leftEyeRightLandmarkY = int((landmarks.part(44).y + landmarks.part(46).y) / 2)
 
-    # cv2.line(singleFrame, (landmarks.part(36).x, landmarks.part(36).y), (landmarks.part(39).x, landmarks.part(39).y),
-    #          (255, 255, 0), 1)
-    # cv2.line(singleFrame, (landmarks.part(42).x, landmarks.part(42).y), (landmarks.part(45).x, landmarks.part(45).y),
-    #          (255, 255, 0), 1)
-
     return cv2.norm((rightEyeLeftLandmarkX, rightEyeLeftLandmarkY),
                     (rightEyeRightLandmarkX, rightEyeRightLandmarkY)), cv2.norm(
         (leftEyeLeftLandmarkX, leftEyeLeftLandmarkY),
@@ -225,10 +220,6 @@ def leftAndRightEyeVerLenght(landmarks):
     leftEyeBottomLandmarkX = int((landmarks.part(47).x + landmarks.part(46).x) / 2)
     leftEyeBottomLandmarkY = int((landmarks.part(47).y + landmarks.part(46).y) / 2)
 
-    # cv2.line(singleFrame, (landmarks.part(36).x, landmarks.part(36).y), (landmarks.part(39).x, landmarks.part(39).y),
-    #          (0, 255, 0), 1)
-    # cv2.line(singleFrame, (landmarks.part(42).x, landmarks.part(42).y), (landmarks.part(45).x, landmarks.part(45).y),
-    #          (0, 255, 0), 1)
 
     return cv2.norm((rightEyeTopLandmarkX, rightEyeTopLandmarkY),
                     (rightEyeBottomLandmarkX, rightEyeBottomLandmarkY)), cv2.norm(
@@ -252,37 +243,11 @@ def showRightEyeRectalngle(singleFrame, landmarks):
     rightEyeBottomLandmarkX = landmarks.part(39).x
     rightEyeBottomLandmarkY = landmarks.part(40).y
 
-    # cv2.rectangle(singleFrame, (rightEyeTopLandmarkX, rightEyeTopLandmarkY),
-    #               (rightEyeBottomLandmarkX, rightEyeBottomLandmarkY), (0, 222, 122))
     return singleFrame[rightEyeTopLandmarkY:rightEyeTopLandmarkY + (rightEyeBottomLandmarkY - rightEyeTopLandmarkY) + 2,
            rightEyeTopLandmarkX:rightEyeTopLandmarkX + (rightEyeBottomLandmarkX - rightEyeTopLandmarkX) + 2]
 
 
-def areEyesShut(landmarks,shape,):
-    RightEyeTopLandmarkX = int((landmarks.part(37).x + landmarks.part(38).x) / 2)
-    RightEyeTopLandmarkY = int((landmarks.part(37).y + landmarks.part(38).y) / 2)
-    RightEyeBottomLandmarkX = int((landmarks.part(41).x + landmarks.part(40).x) / 2)
-    RightEyeBottomLandmarkY = int((landmarks.part(41).y + landmarks.part(40).y) / 2)
-
-    LeftEyeTopLandmarkX = int((landmarks.part(43).x + landmarks.part(44).x) / 2)
-    LeftEyeTopLandmarkY = int((landmarks.part(43).y + landmarks.part(44).y) / 2)
-    LeftEyeBottomLandmarkX = int((landmarks.part(47).x + landmarks.part(46).x) / 2)
-    LeftEyeBottomLandmarkY = int((landmarks.part(47).y + landmarks.part(46).y) / 2)
-
-    # cv2.line(singleFrame, (RightEyeTopLandmarkX, RightEyeTopLandmarkY),
-    #          (RightEyeBottomLandmarkX, RightEyeBottomLandmarkY),
-    #          (0, 255, 0), 1)
-    #
-    # cv2.line(singleFrame, (LeftEyeTopLandmarkX, LeftEyeTopLandmarkY),
-    #          (LeftEyeBottomLandmarkX, LeftEyeBottomLandmarkY),
-    #          (0, 255, 0), 1)
-
-    rightEyeHorLenght, leftEyeHorLength = leftAndRightEyeHorLenght(landmarks)
-    rightEyeVerLenght, leftEyeVerLength = leftAndRightEyeVerLenght(landmarks)
-
-    eyesHorLengthAvg = (rightEyeHorLenght + leftEyeHorLength) / 2
-    eyesVerLengthAvg = (rightEyeVerLenght + leftEyeVerLength) / 2
-    # eyesVerLengthAvg < eyesHorLengthAvg - 3
+def areEyesShut(shape):
 
     (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
     (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
@@ -292,38 +257,7 @@ def areEyesShut(landmarks,shape,):
     rightEyeEar = eye_aspect_ratio(rightEye)
     ear = (leftEyeEar + rightEyeEar) / 2.0
 
-    print(ear)
     return ear <= 0.27
-
-
-def showEyeLandmarks(landmarks):
-    # cv2.circle(singleFrame, (landmarks.part(36).x, landmarks.part(36).y), 1, (0, 200, 0))
-    # cv2.circle(singleFrame, (landmarks.part(37).x, landmarks.part(37).y), 1, (0, 200, 0))
-    # cv2.circle(singleFrame, (landmarks.part(38).x, landmarks.part(38).y), 1, (0, 200, 0))
-    # cv2.circle(singleFrame, (landmarks.part(39).x, landmarks.part(39).y), 1, (0, 200, 0))
-    # cv2.circle(singleFrame, (landmarks.part(40).x, landmarks.part(40).y), 1, (0, 200, 0))
-    # cv2.circle(singleFrame, (landmarks.part(41).x, landmarks.part(41).y), 1, (0, 200, 0))
-    #
-    # cv2.circle(singleFrame, (landmarks.part(42).x, landmarks.part(42).y), 1, (0, 200, 0))
-    # cv2.circle(singleFrame, (landmarks.part(43).x, landmarks.part(43).y), 1, (0, 200, 0))
-    # cv2.circle(singleFrame, (landmarks.part(44).x, landmarks.part(44).y), 1, (0, 200, 0))
-    # cv2.circle(singleFrame, (landmarks.part(45).x, landmarks.part(45).y), 1, (0, 200, 0))
-    # cv2.circle(singleFrame, (landmarks.part(46).x, landmarks.part(46).y), 1, (0, 200, 0))
-    # cv2.circle(singleFrame, (landmarks.part(47).x, landmarks.part(47).y), 1, (0, 200, 0))
-
-    rightEyeLandmarkLine = np.array(
-        [[landmarks.part(36).x, landmarks.part(36).y], [landmarks.part(37).x, landmarks.part(37).y],
-         [landmarks.part(38).x, landmarks.part(38).y], [landmarks.part(39).x, landmarks.part(39).y],
-         [landmarks.part(40).x, landmarks.part(40).y], [landmarks.part(41).x, landmarks.part(41).y],
-         [landmarks.part(36).x, landmarks.part(36).y]], np.int32)
-    leftEyeLandmarkLine = np.array(
-        [[landmarks.part(42).x, landmarks.part(42).y], [landmarks.part(43).x, landmarks.part(43).y],
-         [landmarks.part(44).x, landmarks.part(44).y], [landmarks.part(45).x, landmarks.part(45).y],
-         [landmarks.part(46).x, landmarks.part(46).y], [landmarks.part(47).x, landmarks.part(47).y],
-         [landmarks.part(42).x, landmarks.part(42).y]], np.int32)
-
-    # cv2.polylines(singleFrame,[rightEyeLandmarkLine],True,(0,200.200),1)
-    # cv2.polylines(singleFrame,[leftEyeLandmarkLine],True,(0,200.200),1)
 
 
 title_window = 'driver'
@@ -392,12 +326,6 @@ while True:
        print("yolo video done")
 
 
-
-
-    # img_resp = requests.get(url)
-    # img_arr = np.array(bytearray(img_resp.content), dtype=np.uint8)
-    # img = cv2.imdecode(img_arr, -1)
-    # img = imutils.resize(img, width=1000, height=1800)
     blinkSleepThread = threading.Thread(target=blinkSleep)
     thread = threading.Thread(target=distractionCountDown)
 
@@ -418,7 +346,6 @@ while True:
 
     faces = faceCascade.detectMultiScale(singleFrame, 1.1, 5)
 
-    # cv2.putText(singleFrame, f"threshold {eyeBallThreshold}", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 3, (200, 23, 32))
     gazeIsOnRoad = False
     if(len(faces) == 0):
         cv2.putText(singleFrame, 'Warning!!', (150, 140), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 255))
@@ -438,11 +365,10 @@ while True:
         gazeIsOnRoad = True
         landmarks = predictor(optFace,
                               dlib.rectangle(topLeftX, topLeftY, topLeftX + bottomRightX, topLeftY + bottomRightY))
-        showEyeLandmarks(landmarks)
 
         shape = face_utils.shape_to_np(landmarks)
-        eyesClosed = areEyesShut(landmarks,shape)
-        longEyeShut = areEyesShut(landmarks,shape)
+        eyesClosed = areEyesShut(shape)
+        longEyeShut = areEyesShut(shape)
         if eyesClosed and readyForBlinkIncrease:
             readyForBlinkIncrease = False
             blinkSleepThread.start()
@@ -463,46 +389,10 @@ while True:
         else:
             cv2.putText(singleFrame, 'Off Road', (18, 120), cv2.FONT_HERSHEY_SIMPLEX, 1.4, (0, 0, 255))
 
-    # rightEyeGazeRatio = gaze_ratio(landmarks, [43, 44,47, 46],singleFrame)
-    # gazeRatio = (leftEyeGazeRatio + rightEyeGazeRatio) / 2
-    # cv2.putText(singleFrame, str(leftEyeGazeRatio), (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2,(200, 23, 32))
-    # # if gazeRatio < 1:
-    #     cv2.putText(singleFrame, "Right", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2,
-    #                 (200, 23, 32))
-    # elif 1 < gazeRatio < 3:
-    #     cv2.putText(singleFrame, "Center", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2,
-    #                 (200, 23, 32))
-    # else:
-    #     cv2.putText(singleFrame, "Left", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.2,
-    #                 (200, 23, 32))
-
-    # keypoints = blob_process(rightEye, blobDetector)
-    # eye = cv2.drawKeypoints(rightEye, keypoints, rightEye, (0, 0, 255), cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
-
     cv2.putText(singleFrame, f"blink counter: {blinkCounter}", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.2,
                 (255, 23, 32))
 
-    # isOnRoad = not eyesClosed or (gazeIsOnRoad and eyeGazeInTheRange)
-
-    # if isOnRoad:
-    #     # cv2.putText(singleFrame, "onRoad", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 3, (200, 23, 32))
-    #
-    #     sleepTimer = 0
-    #     if thread.is_alive():
-    #         thread.join()
-    #     sleepTimerHasStarted = False
-    #     if player is not None:
-    #         player.close_player()
-    #
-    #
-    # else:
-    #     # cv2.putText(singleFrame, "offRoad", (50, 150), cv2.FONT_HERSHEY_SIMPLEX, 3, (200, 23, 32))
-    #     if not sleepTimerHasStarted:
-    #         sleepTimerHasStarted = True
-    #         thread.start()
-
     if sleepTimer == 3:
-        print(sleepTimer)
         player = MediaPlayer(sirenSoundPath)
 
 
@@ -541,6 +431,5 @@ while True:
         isTrackerSet = True
         # cv2.createTrackbar('gela', title_window, 0, 255, on_trackbar)
 
-    # cv2.imshow("Android_cam", img)
 
 
