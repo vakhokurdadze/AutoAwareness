@@ -416,7 +416,7 @@ while True:
 
     optFace = cv2.cvtColor(singleFrame, cv2.COLOR_BGR2GRAY)
 
-    faces = detector(singleFrame)
+    faces = faceCascade.detectMultiScale(singleFrame, 1.1, 5)
 
     # cv2.putText(singleFrame, f"threshold {eyeBallThreshold}", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 3, (200, 23, 32))
     gazeIsOnRoad = False
@@ -429,12 +429,15 @@ while True:
 
     for face in faces:
         driverOutOfSight = False
-        topLeftX, topLeftY = face.left(), face.top()
-        bottomRightX, bottomRightY = face.right(), face.bottom()
-        cv2.rectangle(singleFrame, (topLeftX, topLeftY), (bottomRightX, bottomRightY), (0, 222, 122))
+
+        topLeftX, topLeftY = face[0], face[1]
+        bottomRightX, bottomRightY = face[2], face[3]
+        cv2.rectangle(singleFrame, (topLeftX, topLeftY), (topLeftX + bottomRightX, topLeftY + bottomRightY),
+                      (0, 222, 122))
 
         gazeIsOnRoad = True
-        landmarks = predictor(optFace, face)
+        landmarks = predictor(optFace,
+                              dlib.rectangle(topLeftX, topLeftY, topLeftX + bottomRightX, topLeftY + bottomRightY))
         showEyeLandmarks(landmarks)
 
         shape = face_utils.shape_to_np(landmarks)
