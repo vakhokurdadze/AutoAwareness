@@ -9,13 +9,13 @@ import keyboard
 import threading
 from scipy.spatial import distance as dist
 from imutils import face_utils
+from picamera2.picamera2 import Picamera2
 
 
 url = "http://192.168.100.6:8080//shot.jpg"
 sirenSoundPath = r"C:\Users\User\Downloads\mixkit-battleship-alarm-1001.wav"
 fullRoadVideo = cv2.VideoCapture(r"C:\Users\User\Downloads\pexels-kelly-lacy-5473757.mp4")
 
-cap = cv2.VideoCapture(0)
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
 predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
@@ -378,6 +378,11 @@ def initYolo():
         cv2.putText(optFrame, f"Empty Road ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,0))
 
     cv2.imshow('cars', optFrame)
+cv2.startWindowThread()
+
+picam2 = Picamera2()
+picam2.configure(picam2.preview_configuration(main={"format": 'XRGB8888', "size": (640, 480)}))
+picam2.start()
 
 while True:
 
@@ -397,7 +402,6 @@ while True:
     thread = threading.Thread(target=distractionCountDown)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
-        cap.release()
         cv2.destroyAllWindows()
         break
     elif cv2.waitKey(1) & 0xFF == ord('1'):
@@ -408,7 +412,7 @@ while True:
         if eyeBallThreshold != 255:
             eyeBallThreshold += 1
 
-    ret, singleFrame = cap.read()
+    singleFrame = picam2.capture_array()
 
     optFace = cv2.cvtColor(singleFrame, cv2.COLOR_BGR2GRAY)
 
