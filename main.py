@@ -150,47 +150,41 @@ def blinkSleep():
     readyForBlinkIncrease = True
 
 
-def detect_eyes(img):
-    left_eye = None
-    right_eye = None
-    gray_frame = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    eyes = eye_cascade.detectMultiScale(gray_frame, 1.3, 5)  # detect eyes
-    width = np.size(img, 1)  # get face frame width
-    height = np.size(img, 0)  # get face frame height
+def detect_eyes(faceSection):
+   leftEye, rightEye = None, None
 
-    for (x, y, w, h) in eyes:
-        if y > height / 2:
-            pass
-        eyecenter = x + w / 2  # get the eye center
-        if eyecenter < width * 0.5:
-            left_eye = img[y:y + h, x:x + w]
+   grayFrame = cv2.cvtColor(faceSection, cv2.COLOR_BGR2GRAY)
+   width, height = np.size(faceSection, 1), np.size(faceSection, 0)
+   eyes = eye_cascade.detectMultiScale(grayFrame, 1.3, 5)
 
-        else:
-            right_eye = img[y:y + h, x:x + w]
+   for (x, y, w, h) in eyes:
+       if y > height / 2:
+           pass
+       centerPart = x + w / 2
+       if centerPart >= width * 0.5:
+           rightEye = faceSection[y:y + h, x:x + w]
+       else:
+           leftEye = faceSection[y:y + h, x:x + w]
 
-
-
-    return left_eye, right_eye
+   return leftEye, rightEye
 
 
-def blob_process(img, detector, threshold):
-    gray_frame = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    _, img = cv2.threshold(gray_frame, threshold, 255, cv2.THRESH_BINARY)
-    img = cv2.erode(img, None, iterations=2)
-    img = cv2.dilate(img, None, iterations=4)
-    img = cv2.medianBlur(img, 5)
-    keypoints = detector.detect(img)
+def blob_process(eyePart, detector, threshold):
+   grayFrame = cv2.cvtColor(eyePart, cv2.COLOR_BGR2GRAY)
+   _, eyePart = cv2.threshold(grayFrame, threshold, 255, cv2.THRESH_BINARY)
+   eyePart = cv2.erode(eyePart, None, iterations=2)
+   eyePart = cv2.dilate(eyePart, None, iterations=4)
+   eyePart = cv2.medianBlur(eyePart, 5)
 
-    return keypoints
+   return detector.detect(eyePart)
 
 
-def cut_eyebrows(img):
+def cut_eyebrows(eyeSection):
+   h, w = eyeSection.shape[:2]
+   eyebrowHeight = int(h / 4)
+   eyeSection = eyeSection[eyebrowHeight:h, 0:w]
 
-    height, width = img.shape[:2]
-    eyebrow_h = int(height / 4)
-    img = img[eyebrow_h:height, 0:width]  # cut eyebrows out (15 px)
-    return img
-
+   return eyeSection
 
 def leftAndRightEyeHorLenght(landmarks):
     rightEyeLeftLandmarkX = int((landmarks.part(37).x + landmarks.part(41).x) / 2)
@@ -339,45 +333,41 @@ def on_trackbar(val):
 
 
 def initYolo():
-    ret, frame = fullRoadVideo.read()
+   ret, yoloFrame = fullRoadVideo.read()
 
-    scale_percent = 15
-    width = int(frame.shape[1] * scale_percent / 100)
-    height = int(frame.shape[0] * scale_percent / 100)
-    dim = (width, height)
+   scaleInPercent = 15
+   height = int(yoloFrame.shape[0] * scaleInPercent / 100)
+   width = int(yoloFrame.shape[1] * scaleInPercent / 100)
 
-    optFrame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+   dim = (width, height)
 
-    mask = vehicle_obj_detector.apply(optFrame)
-    _,mask = cv2.threshold(mask,254,255,cv2.THRESH_BINARY)
+   optYoloFrame = cv2.resize(yoloFrame, dim, interpolation=cv2.INTER_AREA)
 
+   vehicleMask = vehicle_obj_detector.apply(optYoloFrame)
+   _, vehicleMask = cv2.threshold(vehicleMask, 254, 255, cv2.THRESH_BINARY)
 
+   contours, _ = cv2.findContours(vehicleMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    contours,_ = cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+   contourCounter = 0
 
-    contourCounter = 0
+   for contour in contours:
+       yoloArea = cv2.contourArea(contour)
+       if yoloArea >= 2000:
+           contourCounter += 1
+           x, y, w, h = cv2.boundingRect(contour)
+           cv2.rectangle(optYoloFrame, (x, y), (x + w, y + h), (0, 255, 0), 3)
 
-    for contour in contours :
+   cv2.putText(optYoloFrame, f"{contourCounter} Cars in the nearby area", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1,
+               (200, 23, 32))
 
-        area = cv2.contourArea(contour)
+   if contourCounter >= 4:
+       cv2.putText(optYoloFrame, f"Heavy Traffic Detected!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255))
+   elif 2 <= contourCounter <= 3:
+       cv2.putText(optYoloFrame, f"Possible Traffic Ahead!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255))
+   else:
+       cv2.putText(optYoloFrame, f"Empty Road ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0))
 
-
-        if area >= 2000 :
-            contourCounter += 1
-
-            x,y,w,h = cv2.boundingRect(contour)
-            cv2.rectangle(optFrame,(x,y),(x+w,y+h),(0,255,0),3)
-
-    cv2.putText(optFrame, f"{contourCounter} Cars in the nearby area", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (200, 23, 32))
-
-    if contourCounter >= 4 :
-        cv2.putText(optFrame, f"Heavy Traffic Detected!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 0, 255))
-    elif 2 <= contourCounter <= 3 :
-        cv2.putText(optFrame, f"Possible Traffic Ahead!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,255))
-    else:
-        cv2.putText(optFrame, f"Empty Road ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,0))
-
-    cv2.imshow('cars', optFrame)
+   cv2.imshow('cars', optYoloFrame)
 
 while True:
 
