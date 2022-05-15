@@ -5,7 +5,6 @@ import requests
 import imutils
 from ffpyplayer.player import MediaPlayer
 from time import *
-import keyboard
 import threading
 from scipy.spatial import distance as dist
 from imutils import face_utils
@@ -323,7 +322,7 @@ while True:
     try:
       initYolo()
     except:
-       print("yolo video done")
+       fullRoadVideo.set(cv2.CAP_PROP_POS_FRAMES,0)
 
 
     blinkSleepThread = threading.Thread(target=blinkSleep)
