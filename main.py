@@ -13,7 +13,7 @@ from imutils import face_utils
 
 url = "http://192.168.100.6:8080//shot.jpg"
 sirenSoundPath = r"C:\Users\User\Downloads\final_627a96974ad7b200913b40c3_598866.mp3"
-fullRoadVideo = cv2.VideoCapture(r"C:\Users\User\Downloads\pexels-kelly-lacy-5473757.mp4")
+fullRoadVideo = cv2.VideoCapture(r"C:\Users\User\Downloads\yoloVideo_new.mp4")
 
 cap = cv2.VideoCapture(0)
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
@@ -333,41 +333,31 @@ def on_trackbar(val):
 
 
 def initYolo():
+
    ret, yoloFrame = fullRoadVideo.read()
 
-   scaleInPercent = 15
-   height = int(yoloFrame.shape[0] * scaleInPercent / 100)
-   width = int(yoloFrame.shape[1] * scaleInPercent / 100)
+   optYoloFrame = yoloFrame[450:900,250:850]
 
-   dim = (width, height)
+   car_object_cascade = cv2.CascadeClassifier("cars.xml")
+   cars = car_object_cascade.detectMultiScale(optYoloFrame,1.1,4)
 
-   optYoloFrame = cv2.resize(yoloFrame, dim, interpolation=cv2.INTER_AREA)
-
-   vehicleMask = vehicle_obj_detector.apply(optYoloFrame)
-   _, vehicleMask = cv2.threshold(vehicleMask, 254, 255, cv2.THRESH_BINARY)
-
-   contours, _ = cv2.findContours(vehicleMask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
    contourCounter = 0
+   for (x, y, w, h) in cars:
+        contourCounter += 1
+        cv2.rectangle(optYoloFrame, (x, y), (x + w, y + h), (0, 255, 0), 3)
 
-   for contour in contours:
-       yoloArea = cv2.contourArea(contour)
-       if yoloArea >= 2000:
-           contourCounter += 1
-           x, y, w, h = cv2.boundingRect(contour)
-           cv2.rectangle(optYoloFrame, (x, y), (x + w, y + h), (0, 255, 0), 3)
-
-   cv2.putText(optYoloFrame, f"{contourCounter} Cars in the nearby area", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1,
+   cv2.putText(yoloFrame, f"{contourCounter} Cars in the nearby area", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1,
                (200, 23, 32))
 
    if contourCounter >= 4:
-       cv2.putText(optYoloFrame, f"Heavy Traffic Detected!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255))
+       cv2.putText(yoloFrame, f"Heavy Traffic Detected!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255))
    elif 2 <= contourCounter <= 3:
-       cv2.putText(optYoloFrame, f"Possible Traffic Ahead!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255))
+       cv2.putText(yoloFrame, f"Possible Traffic Ahead!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255))
    else:
-       cv2.putText(optYoloFrame, f"Empty Road ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0))
+       cv2.putText(yoloFrame, f"Empty Road ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0))
 
-   cv2.imshow('cars', optYoloFrame)
+   cv2.imshow('cars', yoloFrame)
 
 while True:
 
@@ -519,7 +509,7 @@ while True:
                 cv2.drawKeypoints(eye, keypoints, eye, (0, 0, 255),
                                   cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS)
 
-    cv2.imshow("driver", singleFrame)
+    # cv2.imshow("driver", singleFrame)
     if not isTrackerSet:
         isTrackerSet = True
         # cv2.createTrackbar('gela', title_window, 0, 255, on_trackbar)
