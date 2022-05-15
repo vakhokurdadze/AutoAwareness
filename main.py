@@ -12,7 +12,7 @@ from imutils import face_utils
 
 
 url = "http://192.168.100.6:8080//shot.jpg"
-sirenSoundPath = r"C:\Users\User\Downloads\mixkit-battleship-alarm-1001.wav"
+sirenSoundPath = r"C:\Users\User\Downloads\final_627a96974ad7b200913b40c3_598866.mp3"
 fullRoadVideo = cv2.VideoCapture(r"C:\Users\User\Downloads\pexels-kelly-lacy-5473757.mp4")
 
 cap = cv2.VideoCapture(0)
@@ -88,7 +88,7 @@ def gaze_ratio(landmarks, eyePoints, singleFrame):
     rightsideThreshold = thresholdEye[0:height, int(width / 2): width]
     right_side_white = cv2.countNonZero(rightsideThreshold)
 
-    cv2.imshow("eye", thresholdEye)
+    # cv2.imshow("eye", thresholdEye)
     midGaze = (left_side_white + right_side_white) / 2
 
     if 0 <= midGaze <= 25:
@@ -373,8 +373,8 @@ while True:
 
     try:
       initYolo()
-    except:
-       print("yolo video done")
+    except Exception as e:
+       fullRoadVideo.set(cv2.CAP_PROP_POS_FRAMES,0)
 
 
 
