@@ -13,7 +13,7 @@ from picamera2.picamera2 import Picamera2
 
 url = "http://192.168.100.6:8080//shot.jpg"
 sirenSoundPath = r"mixkit-battleship-alarm-1001.wav"
-fullRoadVideo = cv2.VideoCapture(r"pexels-kelly-lacy-5473757.mp4")
+fullRoadVideo = cv2.VideoCapture(r"yoloVideo_new.mp4")
 
 faceCascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
@@ -272,45 +272,31 @@ def on_trackbar(val):
 
 
 def initYolo():
-    ret, frame = fullRoadVideo.read()
 
-    scale_percent = 15
-    width = int(frame.shape[1] * scale_percent / 100)
-    height = int(frame.shape[0] * scale_percent / 100)
-    dim = (width, height)
+   ret, yoloFrame = fullRoadVideo.read()
 
-    optFrame = cv2.resize(frame, dim, interpolation=cv2.INTER_AREA)
+   optYoloFrame = yoloFrame[450:900,250:850]
 
-    mask = vehicle_obj_detector.apply(optFrame)
-    _,mask = cv2.threshold(mask,254,255,cv2.THRESH_BINARY)
+   car_object_cascade = cv2.CascadeClassifier("cars.xml")
+   cars = car_object_cascade.detectMultiScale(optYoloFrame,1.1,4)
 
 
+   contourCounter = 0
+   for (x, y, w, h) in cars:
+        contourCounter += 1
+        cv2.rectangle(optYoloFrame, (x, y), (x + w, y + h), (0, 255, 0), 3)
 
-    contours,_ = cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+   cv2.putText(yoloFrame, f"{contourCounter} Cars in the nearby area", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1,
+               (200, 23, 32))
 
-    contourCounter = 0
+   if contourCounter >= 4:
+       cv2.putText(yoloFrame, f"Heavy Traffic Detected!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255))
+   elif 2 <= contourCounter <= 3:
+       cv2.putText(yoloFrame, f"Possible Traffic Ahead!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255))
+   else:
+       cv2.putText(yoloFrame, f"Empty Road ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0))
 
-    for contour in contours :
-
-        area = cv2.contourArea(contour)
-
-
-        if area >= 2000 :
-            contourCounter += 1
-
-            x,y,w,h = cv2.boundingRect(contour)
-            cv2.rectangle(optFrame,(x,y),(x+w,y+h),(0,255,0),3)
-
-    cv2.putText(optFrame, f"{contourCounter} Cars in the nearby area", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (200, 23, 32))
-
-    if contourCounter >= 4 :
-        cv2.putText(optFrame, f"Heavy Traffic Detected!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1,(0, 0, 255))
-    elif 2 <= contourCounter <= 3 :
-        cv2.putText(optFrame, f"Possible Traffic Ahead!! ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,255))
-    else:
-        cv2.putText(optFrame, f"Empty Road ", (20, 150), cv2.FONT_HERSHEY_SIMPLEX, 1,(0,255,0))
-
-    cv2.imshow('cars', optFrame)
+   cv2.imshow('cars', yoloFrame)
 cv2.startWindowThread()
 
 picam2 = Picamera2()
